@@ -6,6 +6,7 @@ from PIL import Image
 import fitz  # PyMuPDF
 import json
 import argparse
+import shutil
 
 api_key = os.getenv("OPENAI_API_KEY")
 #%%
@@ -65,6 +66,11 @@ def rename_and_convert_to_pdf(file_path, new_filename):
 
 def process_invoices(folder_path):
     temp_image_path = os.path.join(folder_path, "temp_image.jpg")
+    raw_folder = os.path.join(folder_path, "raw")
+    processed_folder = os.path.join(folder_path, "processed")
+    os.makedirs(raw_folder, exist_ok=True)
+    os.makedirs(processed_folder, exist_ok=True)
+
     for filename in os.listdir(folder_path):
         file_path = os.path.join(folder_path, filename)
         if filename.lower().endswith(('png', 'jpg', 'jpeg')):
@@ -79,8 +85,9 @@ def process_invoices(folder_path):
             company_name = info["company_name"]
             amount = info["amount"]
             new_filename = f"{company_name} -- {amount.replace(' ', '').replace('.', '_')}.pdf"
-            new_file_path = os.path.join(folder_path, new_filename)
+            new_file_path = os.path.join(processed_folder, new_filename)
             rename_and_convert_to_pdf(file_path, new_file_path)
+            shutil.move(file_path, os.path.join(raw_folder, filename))
         except Exception as e:
             print(f"Failed to extract information from {filename}")
             raise
